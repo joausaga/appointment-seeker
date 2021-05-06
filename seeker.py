@@ -108,7 +108,7 @@ def seek_appointment():
     appointment_data = get_config('appointment_data.json')
 
     # get offices in which the procedure is available
-    logging.info(f'Looking for offices in the provice of '\
+    logging.info(f'\nLooking for offices in the provice of '\
                  f'{normalize_text(appointment_data["province"])} that offer the procedure '\
                  f'{normalize_text(appointment_data["procedure"])}')
     available_offices = find_available_offices(config_params, appointment_data)
