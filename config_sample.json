@@ -1,0 +1,62 @@
+{
+    "appointment_website": "https://sede.administracionespublicas.gob.es/icpplustieb/index",
+    "page_1": {
+        "html_elements": {
+            "province_select_name": "form",
+            "submit_button_name": "btnAceptar",
+            "cookie_button_name": "cookie_action_close_header"
+        }
+    },
+    "page_2": {
+        "html_elements": {
+            "office_select_name": "sede",
+            "procedure_select_name": "tramiteGrupo[0]",
+            "submit_button_name": "btnAceptar"
+        }
+    },
+    "page_3": {
+        "html_elements": {
+            "submit_button_name": "btnEntrar"
+        }
+    },
+    "page_4": {
+        "html_elements": {
+            "nie_input_name": "txtIdCitado",
+            "name_input_name": "txtDesCitado",
+            "country_select_name": "txtPaisNac",
+            "date_input_name": "txtFecha",
+            "submit_button_name": "btnEnviar"
+        }
+    },
+    "page_5": {
+        "html_elements": {
+            "submit_button_name": "btnEnviar"
+        }
+    },
+    "page_6": {
+        "html_elements": {
+            "exit_button_name": "btnSalir",
+            "msg_class_name": "mf-msg__info",
+            "msg_text": "no hay citas disponibles"
+        }
+    },
+    "page_7": {
+        "html_elements": {
+            "phone_input_name": "txtTelefonoCitado",
+            "email_input_name": "emailUNO",
+            "repeat_email_input_name": "emailDOS",
+            "submit_button_name": "btnSiguiente"
+        }
+    },
+    "page_8": {
+        "html_elements": {
+            "exit_button_name": "btnSubmit",
+            "msg_class_name": "mf-msg__info",
+            "msg_text": "no hay citas disponibles"
+        }
+    },
+    "sender_email_address": "",
+    "sender_email_password": "",
+    "email_host": "",
+    "email_host_port": ""
+}
