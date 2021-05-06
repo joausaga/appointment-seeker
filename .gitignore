@@ -3,3 +3,5 @@ __pychache__
 log
 geckodriver.log
 *.pyc
+appointment_data.json
+config.json
