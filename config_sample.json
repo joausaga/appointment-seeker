@@ -11,7 +11,9 @@
         "html_elements": {
             "office_select_name": "sede",
             "procedure_select_name": "tramiteGrupo[0]",
-            "submit_button_name": "btnAceptar"
+            "submit_button_name": "btnAceptar",
+            "msg_class_name": "mf-note",
+            "msg_text": "no hay citas disponibles"
         }
     },
     "page_3": {

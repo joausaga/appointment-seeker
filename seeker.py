@@ -10,6 +10,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.remote.remote_connection import LOGGER
+from selenium.webdriver.firefox.options import Options
 from utils import get_config, normalize_text
 from urllib3.connectionpool import log as urllibLogger
 
@@ -31,7 +32,9 @@ def find_available_offices(config_params, appointment_data):
     available_offices = []
 
     # open browser
-    browser = webdriver.Firefox()
+    options = Options()
+    options.headless = True
+    browser = webdriver.Firefox(options=options)
     # open website
     browser.get(config_params['appointment_website'])
     
@@ -108,7 +111,8 @@ def seek_appointment():
     appointment_data = get_config('appointment_data.json')
 
     # get offices in which the procedure is available
-    logging.info(f'\nLooking for offices in the provice of '\
+    logging.info('##############')
+    logging.info(f'Looking for offices in the provice of '\
                  f'{normalize_text(appointment_data["province"])} that offer the procedure '\
                  f'{normalize_text(appointment_data["procedure"])}')
     available_offices = find_available_offices(config_params, appointment_data)
@@ -119,7 +123,7 @@ def seek_appointment():
     browser.get(config_params['appointment_website'])
     
     # 0. accept cookie message
-    logging.info(f'Accepting cooking message')
+    logging.info(f'Accepting cooking message\n')
     browser.find_element_by_id(
         config_params['page_1']['html_elements']['cookie_button_name']
     ).click()
@@ -131,7 +135,7 @@ def seek_appointment():
         try:
             # 1. select province and go to next page
             time.sleep(random.uniform(1, 2))
-            province_list = Select(browser.find_element_by_name(
+            province_list = Select(browser.find_element_by_id(
                 config_params['page_1']['html_elements']['province_select_name'])
             )
             province_list.select_by_visible_text(
@@ -143,6 +147,14 @@ def seek_appointment():
 
             # 2. select office (sede), procedure (tramite), and go to next page
             time.sleep(random.uniform(1, 4))
+            there_arent_appointments = check_no_appointments_msg(
+                browser, 
+                config_params['page_2']['html_elements']['msg_class_name'],
+                config_params['page_2']['html_elements']['msg_text']
+            )
+            if there_arent_appointments:
+                logging.info(f'There are not appointments at this moment in {normalize_text(office)}\n')
+                continue
             office_list = Select(browser.find_element_by_name(
                 config_params['page_2']['html_elements']['office_select_name'])
             )
@@ -152,9 +164,6 @@ def seek_appointment():
             )
             # we have to wait until the option is ready to be selected
             time.sleep(3)
-            #WebDriverWait(browser, 10).until(
-            #    EC.element_to_be_clickable((By.XPATH, f"//select[@id={config_params['page_2']['html_elements']['procedure_select_name']}]//options[contains(.,{appointment_data['procedure']})]"))
-            #)
             procedure_list.select_by_visible_text(appointment_data['procedure'])
             browser.find_element_by_id(
                 config_params['page_2']['html_elements']['submit_button_name']
@@ -255,7 +264,7 @@ def seek_appointment():
     
     if there_arent_appointments:
         logging.info(f'Could not find appointments for '\
-                     f'{normalize_text(appointment_data["procedure"])}')
+                     f'{normalize_text(appointment_data["procedure"])}\n')
         # close browser
         browser.close()
 
