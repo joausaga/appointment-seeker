@@ -152,8 +152,11 @@ def seek_appointment():
                 config_params['page_2']['html_elements']['msg_class_name'],
                 config_params['page_2']['html_elements']['msg_text']
             )
-            if there_arent_appointments:
+            if there_arent_appointments and random.uniform(0,1) > 0.5:
                 logging.info(f'There are not appointments at this moment in {normalize_text(office)}\n')
+                browser.find_element_by_id(
+                    config_params['page_2']['html_elements']['back_button_name']
+                ).click()
                 continue
             office_list = Select(browser.find_element_by_name(
                 config_params['page_2']['html_elements']['office_select_name'])
