@@ -2,6 +2,7 @@
 
 
 PROJECT_DIR=`pwd`
+ENV_DIR=""
 
 for arg in "$@"
 do
@@ -9,6 +10,10 @@ do
         --project_dir=*)
         PROJECT_DIR="${arg#*=}"
         shift # Remove --project_dir= from processing
+        ;;
+        --env_dir=*)
+        ENV_DIR="${arg#*=}"
+        shift # Remove --env_dir= from processing
         ;;
     esac
 done
@@ -22,7 +27,6 @@ fi
 
 LOGFILE=${LOG_DIR}/run.log
 ERRORFILE=${LOG_DIR}/run.err
-ENV_DIR="/Users/jorgesaldivar/.pyenv/versions/appointment-seeker-env"
 error=0
 
 ####
