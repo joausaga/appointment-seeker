@@ -28,7 +28,7 @@ LOGGER.setLevel(logging.ERROR)
 urllibLogger.setLevel(logging.ERROR)
 
 
-def find_available_offices(config_params, appointment_data):
+def find_available_offices(config_params, appointment_data, province):
     available_offices = []
 
     # open browser
@@ -48,9 +48,7 @@ def find_available_offices(config_params, appointment_data):
     province_list = Select(browser.find_element_by_name(
         config_params['page_1']['html_elements']['province_select_name'])
     )
-    province_list.select_by_visible_text(
-        appointment_data['province']
-    )
+    province_list.select_by_visible_text(province)
     browser.find_element_by_id(
         config_params['page_1']['html_elements']['submit_button_name']
     ).click()
@@ -111,165 +109,179 @@ def seek_appointment():
     appointment_data = get_config('appointment_data.json')
 
     # get offices in which the procedure is available
-    logging.info('##############')
-    logging.info(f'Looking for offices in the provice of '\
-                 f'{normalize_text(appointment_data["province"])} that offer the procedure '\
-                 f'{normalize_text(appointment_data["procedure"])}')
-    available_offices = find_available_offices(config_params, appointment_data)
+    provinces = appointment_data['provinces']
+    for province in provinces:
+        logging.info('##############')
+        logging.info(f'Looking for offices in the provice of '\
+                    f'{normalize_text(province)} that offer the procedure '\
+                    f'{normalize_text(appointment_data["procedure"])}')
+        available_offices = find_available_offices(
+            config_params, appointment_data, province
+        )
 
-    # open browser
-    browser = webdriver.Firefox()
-    # open website
-    browser.get(config_params['appointment_website'])
-    
-    # 0. accept cookie message
-    logging.info(f'Accepting cooking message\n')
-    browser.find_element_by_id(
-        config_params['page_1']['html_elements']['cookie_button_name']
-    ).click()
-
-    there_arent_appointments = False
-    for office in available_offices:
-        logging.info(f'Looking for appointments in office: {normalize_text(office)}')
+        # open browser
+        browser = webdriver.Firefox()
+        # open website
+        browser.get(config_params['appointment_website'])
         
-        try:
-            # 1. select province and go to next page
-            time.sleep(random.uniform(1, 2))
-            province_list = Select(browser.find_element_by_id(
-                config_params['page_1']['html_elements']['province_select_name'])
-            )
-            province_list.select_by_visible_text(
-                appointment_data['province']
-            )
-            browser.find_element_by_id(
-                config_params['page_1']['html_elements']['submit_button_name']
-            ).click()
+        # 0. accept cookie message
+        logging.info(f'Accepting cooking message\n')
+        browser.find_element_by_id(
+            config_params['page_1']['html_elements']['cookie_button_name']
+        ).click()
 
-            # 2. select office (sede), procedure (tramite), and go to next page
-            time.sleep(random.uniform(1, 4))
-            there_arent_appointments = check_no_appointments_msg(
-                browser, 
-                config_params['page_2']['html_elements']['msg_class_name'],
-                config_params['page_2']['html_elements']['msg_text']
-            )
-            if there_arent_appointments and random.uniform(0,1) > 0.5:
-                logging.info(f'There are not appointments at this moment in {normalize_text(office)}\n')
-                browser.find_element_by_id(
-                    config_params['page_2']['html_elements']['back_button_name']
-                ).click()
-                continue
-            office_list = Select(browser.find_element_by_name(
-                config_params['page_2']['html_elements']['office_select_name'])
-            )
-            office_list.select_by_visible_text(office)
-            procedure_list = Select(browser.find_element_by_name(
-                config_params['page_2']['html_elements']['procedure_select_name'])
-            )
-            # we have to wait until the option is ready to be selected
-            time.sleep(3)
-            procedure_list.select_by_visible_text(appointment_data['procedure'])
-            browser.find_element_by_id(
-                config_params['page_2']['html_elements']['submit_button_name']
-            ).click()
-
-            # 3. enter into the procedure
-            time.sleep(random.uniform(1, 2))
-            browser.find_element_by_id(
-                config_params['page_3']['html_elements']['submit_button_name']
-            ).click()
-
-            # 4. complete requester info go to the next page
-            time.sleep(random.uniform(2, 6))
-            input_element = browser.find_element_by_name(
-                config_params['page_4']['html_elements']['nie_input_name']
-            )
-            input_element.send_keys(appointment_data['nie'])
-            input_element = browser.find_element_by_name(
-                config_params['page_4']['html_elements']['name_input_name']
-            )
-            input_element.send_keys(appointment_data['full_name'])
-            country_list = Select(browser.find_element_by_name(
-                config_params['page_4']['html_elements']['country_select_name'])
-            )
-            country_list.select_by_visible_text(
-                appointment_data['country']
-            )
-            input_element = browser.find_element_by_name(
-                config_params['page_4']['html_elements']['date_input_name']
-            )
-            input_element.send_keys(appointment_data['nie_expiration_date'])
-            browser.find_element_by_id(
-                config_params['page_4']['html_elements']['submit_button_name']
-            ).click()
-
-            # 5. click on "solicitar cita"
-            time.sleep(random.uniform(1, 2))
-            browser.find_element_by_id(
-                config_params['page_5']['html_elements']['submit_button_name']
-            ).click()
-
-            # 6. check message and go back if there aren't appointments
-            there_arent_appointments = check_no_appointments_msg(
-                browser, 
-                config_params['page_6']['html_elements']['msg_class_name'],
-                config_params['page_6']['html_elements']['msg_text']
-            )
-            if there_arent_appointments:
-                logging.info(f'There are not appointments for '\
-                            f'{normalize_text(appointment_data["procedure"])} in {normalize_text(office)}\n')
-                browser.find_element_by_id(
-                    config_params['page_6']['html_elements']['exit_button_name']
-                ).click()
-            else:
-                # 7. complete contact information of requester
-                logging.info(f'Arrived to contact information page, we are close!')
-                time.sleep(random.uniform(2, 4))
-                input_element = browser.find_element_by_name(
-                    config_params['page_7']['html_elements']['phone_input_name']
+        there_arent_appointments = False
+        for office in available_offices:
+            logging.info(f'Looking for appointments in office: {normalize_text(office)}')
+            
+            try:
+                # 1. select province and go to next page
+                time.sleep(random.uniform(1, 2))
+                province_list = Select(browser.find_element_by_id(
+                    config_params['page_1']['html_elements']['province_select_name'])
                 )
-                input_element.send_keys(appointment_data['phone_number'])
-                input_element = browser.find_element_by_id(
-                    config_params['page_7']['html_elements']['email_input_name']
-                )
-                input_element.send_keys(appointment_data['email'])
-                input_element = browser.find_element_by_id(
-                    config_params['page_7']['html_elements']['repeat_email_input_name']
-                )
-                input_element.send_keys(appointment_data['email'])
+                province_list.select_by_visible_text(province)
                 browser.find_element_by_id(
-                    config_params['page_7']['html_elements']['submit_button_name']
+                    config_params['page_1']['html_elements']['submit_button_name']
                 ).click()
 
-                # 8. check message and go back if there aren't appointments
+                # 2. select office (sede), procedure (tramite), and go to next page
+                time.sleep(random.uniform(1, 4))
                 there_arent_appointments = check_no_appointments_msg(
                     browser, 
-                    config_params['page_8']['html_elements']['msg_class_name'],
-                    config_params['page_8']['html_elements']['msg_text']
+                    config_params['page_2']['html_elements']['msg_class_name'],
+                    config_params['page_2']['html_elements']['msg_text']
+                )
+                if there_arent_appointments and random.uniform(0,1) > 0.5:
+                    logging.info(f'There are not appointments at this moment in {normalize_text(office)}\n')
+                    browser.find_element_by_id(
+                        config_params['page_2']['html_elements']['back_button_name']
+                    ).click()
+                    continue
+                office_list = Select(browser.find_element_by_name(
+                    config_params['page_2']['html_elements']['office_select_name'])
+                )
+                office_list.select_by_visible_text(office)
+                procedure_list = Select(browser.find_element_by_name(
+                    config_params['page_2']['html_elements']['procedure_select_name'])
+                )
+                # we have to wait until the option is ready to be selected
+                time.sleep(3)
+                procedure_list.select_by_visible_text(appointment_data['procedure'])
+                browser.find_element_by_id(
+                    config_params['page_2']['html_elements']['submit_button_name']
+                ).click()
+
+                # 3. enter into the procedure
+                time.sleep(random.uniform(1, 2))
+                browser.find_element_by_id(
+                    config_params['page_3']['html_elements']['submit_button_name']
+                ).click()
+
+                # 4. complete requester info go to the next page
+                time.sleep(random.uniform(2, 6))
+                input_element = browser.find_element_by_name(
+                    config_params['page_4']['html_elements']['nie_input_name']
+                )
+                input_element.send_keys(appointment_data['nie'])
+                input_element = browser.find_element_by_name(
+                    config_params['page_4']['html_elements']['name_input_name']
+                )
+                input_element.send_keys(appointment_data['full_name'])
+                country_list = Select(browser.find_element_by_name(
+                    config_params['page_4']['html_elements']['country_select_name'])
+                )
+                country_list.select_by_visible_text(
+                    appointment_data['country']
+                )
+                input_element = browser.find_element_by_name(
+                    config_params['page_4']['html_elements']['date_input_name']
+                )
+                input_element.send_keys(appointment_data['nie_expiration_date'])
+                browser.find_element_by_id(
+                    config_params['page_4']['html_elements']['submit_button_name']
+                ).click()
+
+                # 5. click on "solicitar cita"
+                time.sleep(random.uniform(1, 2))
+                browser.find_element_by_id(
+                    config_params['page_5']['html_elements']['submit_button_name']
+                ).click()
+
+                # 6. check message and go back if there aren't appointments
+                there_arent_appointments = check_no_appointments_msg(
+                    browser, 
+                    config_params['page_6']['html_elements']['msg_class_name'],
+                    config_params['page_6']['html_elements']['msg_text']
                 )
                 if there_arent_appointments:
                     logging.info(f'There are not appointments for '\
                                 f'{normalize_text(appointment_data["procedure"])} in {normalize_text(office)}\n')
                     browser.find_element_by_id(
-                        config_params['page_8']['html_elements']['exit_button_name']
+                        config_params['page_6']['html_elements']['exit_button_name']
                     ).click()
                 else:
-                    logging.info('Found an appointment!, sending email')
-                    notify_appointment(
-                        config_params['sender_email_address'],
-                        config_params['sender_email_password'],
-                        config_params['email_host'],
-                        config_params['email_host_port'],
-                        appointment_data['email'],
+                    # 7. complete contact information of requester
+                    logging.info(f'Arrived to contact information page, we are close!')
+                    time.sleep(random.uniform(2, 4))
+                    input_element = browser.find_element_by_name(
+                        config_params['page_7']['html_elements']['phone_input_name']
                     )
-                    break
-        except Exception as e:
-            logging.exception("Exception occurred")
-    
-    if there_arent_appointments:
-        logging.info(f'Could not find appointments for '\
-                     f'{normalize_text(appointment_data["procedure"])}\n')
-        # close browser
-        browser.close()
+                    input_element.send_keys(appointment_data['phone_number'])
+                    input_element = browser.find_element_by_id(
+                        config_params['page_7']['html_elements']['email_input_name']
+                    )
+                    input_element.send_keys(appointment_data['email'])
+                    input_element = browser.find_element_by_id(
+                        config_params['page_7']['html_elements']['repeat_email_input_name']
+                    )
+                    input_element.send_keys(appointment_data['email'])
+                    browser.find_element_by_id(
+                        config_params['page_7']['html_elements']['submit_button_name']
+                    ).click()
+
+                    # 8. check message and go back if there aren't appointments
+                    there_arent_appointments = check_no_appointments_msg(
+                        browser, 
+                        config_params['page_8']['html_elements']['msg_class_name'],
+                        config_params['page_8']['html_elements']['msg_text']
+                    )
+                    if there_arent_appointments:
+                        logging.info(f'There are not appointments for '\
+                                    f'{normalize_text(appointment_data["procedure"])} in {normalize_text(office)}\n')
+                        browser.find_element_by_id(
+                            config_params['page_8']['html_elements']['exit_button_name']
+                        ).click()
+                    else:
+                        # 9. found an appointment, let's select the first option
+                        # and confirm it
+                        logging.info('Found an appointment!')
+                        browser.find_element_by_id(
+                            config_params['page_9']['html_elements']['radio_button_name']
+                        ).click()
+                        browser.find_element_by_id(
+                            config_params['page_9']['html_elements']['submit_button_name']
+                        ).click()
+                        # accept alert
+                        alert = browser.switch_to.alert
+                        alert.accept()
+                        # send an email informing that an appointment was found
+                        notify_appointment(
+                            config_params['sender_email_address'],
+                            config_params['sender_email_password'],
+                            config_params['email_host'],
+                            config_params['email_host_port'],
+                            appointment_data['email'],
+                        )
+                        break
+            except Exception as e:
+                logging.exception("Exception occurred")
+        
+        if there_arent_appointments:
+            logging.info(f'Could not find appointments for '\
+                        f'{normalize_text(appointment_data["procedure"])}\n')
+            # close browser
+            browser.close()
 
 if __name__ == '__main__':
     seek_appointment()
