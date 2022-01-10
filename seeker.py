@@ -4,6 +4,8 @@ import random
 
 from notifier import notify_appointment
 from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import StaleElementReferenceException
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support.ui import WebDriverWait
@@ -13,6 +15,7 @@ from selenium.webdriver.remote.remote_connection import LOGGER
 from selenium.webdriver.firefox.options import Options
 from utils import get_config, normalize_text
 from urllib3.connectionpool import log as urllibLogger
+from selenium.webdriver.common.action_chains import ActionChains
 
 
 logging.basicConfig(
@@ -67,6 +70,10 @@ def find_available_offices(config_params, appointment_data, province):
             # wait a second to let procedure list to be filled
             time.sleep(1)
             # select procedure dropdown
+            element_id = config_params['page_2']['html_elements']['procedure_select_name']
+            ignored_exceptions = (NoSuchElementException,StaleElementReferenceException, )
+            WebDriverWait(browser, random.uniform(3, 5), ignored_exceptions=ignored_exceptions)\
+                .until(EC.presence_of_element_located((By.ID, element_id)))
             procedure_list = Select(browser.find_element_by_name(
                 config_params['page_2']['html_elements']['procedure_select_name'])
             )
@@ -147,27 +154,22 @@ def seek_appointment():
 
                 # 2. select office (sede), procedure (tramite), and go to next page
                 time.sleep(random.uniform(1, 4))
-                there_arent_appointments = check_no_appointments_msg(
-                    browser, 
-                    config_params['page_2']['html_elements']['msg_class_name'],
-                    config_params['page_2']['html_elements']['msg_text']
-                )
-                if there_arent_appointments and random.uniform(0,1) > 0.5:
-                    logging.info(f'There are not appointments at this moment in {normalize_text(office)}\n')
-                    browser.find_element_by_id(
-                        config_params['page_2']['html_elements']['back_button_name']
-                    ).click()
-                    continue
+
                 office_list = Select(browser.find_element_by_name(
                     config_params['page_2']['html_elements']['office_select_name'])
                 )
                 office_list.select_by_visible_text(office)
+
+                element_id = config_params['page_2']['html_elements']['procedure_select_name']
+                ignored_exceptions = (NoSuchElementException,StaleElementReferenceException, )
+                # we have to wait until the option is ready to be selected
+                WebDriverWait(browser, random.uniform(3, 5), ignored_exceptions=ignored_exceptions)\
+                    .until(EC.element_to_be_clickable((By.ID, element_id)))
                 procedure_list = Select(browser.find_element_by_name(
                     config_params['page_2']['html_elements']['procedure_select_name'])
                 )
-                # we have to wait until the option is ready to be selected
-                time.sleep(3)
                 procedure_list.select_by_visible_text(appointment_data['procedure'])
+
                 browser.find_element_by_id(
                     config_params['page_2']['html_elements']['submit_button_name']
                 ).click()
